@@ -10,8 +10,13 @@ import argparse
 import os
 import sys
 
+from handball_analyzer.cost_estimator import (
+    estimate_frame_dimensions,
+    estimate_run,
+    format_estimate,
+)
 from handball_analyzer.events import format_timestamp
-from handball_analyzer.frame_extractor import extract_frames, get_video_duration
+from handball_analyzer.frame_extractor import extract_frames, get_video_info
 from handball_analyzer.report import build_report, print_summary, save_report
 from handball_analyzer.vision_analyzer import DEFAULT_MODEL, ClaudeVisionAnalyzer
 
@@ -49,6 +54,14 @@ def parse_args() -> argparse.Namespace:
         "--quiet", action="store_true",
         help="Ikke skriv sammendrag til konsoll (kun lagre JSON-rapport)",
     )
+    parser.add_argument(
+        "--dry-run", action="store_true",
+        help="Vis kostnadsanslag og avslutt uten å sende noe til Claude API",
+    )
+    parser.add_argument(
+        "-y", "--yes", action="store_true",
+        help="Ikke spør om bekreftelse før API-kall (for bruk i skript/CI)",
+    )
     return parser.parse_args()
 
 
@@ -59,13 +72,46 @@ def main() -> int:
         print(f"Fant ikke videofil: {args.video}", file=sys.stderr)
         return 1
 
+    try:
+        duration, orig_width, orig_height = get_video_info(args.video)
+    except IOError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    # Anslå antall frames uten å dekode hele videoen, slik at vi kan vise et
+    # kostnadsanslag før noe faktisk sendes til API-et.
+    estimated_num_frames = int(duration // args.interval) + 1 if duration > 0 else 0
+    if args.max_frames:
+        estimated_num_frames = min(estimated_num_frames, args.max_frames)
+
+    resized_width, resized_height = estimate_frame_dimensions(
+        orig_width, orig_height, args.max_dimension
+    )
+    estimate = estimate_run(
+        num_frames=estimated_num_frames,
+        batch_size=args.batch_size,
+        frame_width=resized_width,
+        frame_height=resized_height,
+        model=args.model,
+    )
+    print(format_estimate(estimate))
+
+    if args.dry_run:
+        print("\n--dry-run: avslutter uten å kalle Claude API.")
+        return 0
+
+    if not args.yes:
+        answer = input("\nFortsette og sende disse frames til Claude API? [y/N] ").strip().lower()
+        if answer not in ("y", "yes", "j", "ja"):
+            print("Avbrutt av bruker.")
+            return 0
+
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         print("Miljøvariabelen ANTHROPIC_API_KEY er ikke satt.", file=sys.stderr)
         return 1
 
     try:
-        duration = get_video_duration(args.video)
         frames = list(extract_frames(args.video, args.interval, args.max_dimension))
     except IOError as exc:
         print(str(exc), file=sys.stderr)
@@ -79,7 +125,7 @@ def main() -> int:
         return 1
 
     print(
-        f"Analyserer {len(frames)} frames fra {args.video} "
+        f"\nAnalyserer {len(frames)} frames fra {args.video} "
         f"(intervall: {args.interval}s, batch-størrelse: {args.batch_size}, "
         f"modell: {args.model})..."
     )

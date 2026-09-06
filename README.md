@@ -57,6 +57,8 @@ python analyze.py --video kamp.mp4 --interval 1 --output rapport.json
 | `--max-frames`    | Maks antall frames å analysere (nyttig for testing/kostnadskontroll) | ingen grense          |
 | `--max-dimension` | Maks bredde/høyde på frames før sending (px)                         | `768`                 |
 | `--quiet`         | Ikke skriv sammendrag til konsoll                                    | av                    |
+| `--dry-run`       | Vis kostnadsanslag og avslutt uten å kalle Claude API                | av                    |
+| `-y`, `--yes`     | Ikke spør om bekreftelse før API-kall (for skript/CI)                | av                    |
 
 ### Eksempel: rask test på et kort klipp
 
@@ -66,9 +68,49 @@ python analyze.py --video kamp.mp4 --interval 2 --max-frames 20 --output test_ra
 
 ## Om kostnad og ytelse
 
-Hvert frame som sendes til Claude koster API-tokens. For en full kamp (60+
-minutter) med 1 sekunds intervall blir det svært mange bilder og kan bli
-kostbart og tregt. Anbefalinger:
+**Ja, dette koster ekte penger** – hvert frame som sendes til Claude forbruker
+API-tokens, og en full kamp (60+ minutter) med 1 sekunds intervall betyr
+tusenvis av bilder og hundrevis av API-kall.
+
+### Innebygd kostnadssperre
+
+Verktøyet viser **alltid** et kostnadsanslag før noe sendes til API-et, og ber
+om bekreftelse:
+
+```bash
+python analyze.py --video kamp.mp4 --interval 1
+```
+
+```
+=== Kostnadsanslag (grovt, før analyse starter) ===
+Modell: claude-3-5-sonnet-latest
+Antall frames: 3 600  (API-kall/batcher: 720)
+Anslått input-tokens: ~2 019 600
+Anslått output-tokens: ~216 000
+Anslått kostnad: ~$9.30 USD
+
+Fortsette og sende disse frames til Claude API? [y/N]
+```
+
+Bruk `--dry-run` for kun å se anslaget uten å bli spurt (avslutter automatisk),
+eller `-y`/`--yes` for å hoppe over bekreftelsen (f.eks. i skript). Estimatet
+er grovt (basert på Anthropics tommelfingerregel for bildetokens) og er ikke
+en garanti – sjekk faktisk forbruk på
+[console.anthropic.com](https://console.anthropic.com).
+
+### Grove kostnadseksempler (60 minutters kamp, claude-3-5-sonnet)
+
+| Intervall | Antall frames | Anslått kostnad |
+|-----------|---------------|------------------|
+| 1 sekund  | ~3 600        | ~$9 USD          |
+| 3 sekunder| ~1 200        | ~$3 USD          |
+| 5 sekunder| ~720          | ~$2 USD          |
+
+Bytt til en billigere modell (f.eks. `--model claude-3-5-haiku-latest`) for
+et førsteutkast eller for testing – det kutter kostnaden med 70–80 %, på
+bekostning av noe nøyaktighet.
+
+### Anbefalinger for å holde kostnaden nede
 
 - Bruk et større `--interval` (f.eks. 2–5 sekunder) for lange kamper eller
   førsteutkast av analysen.
@@ -76,7 +118,10 @@ kostbart og tregt. Anbefalinger:
   bedre kontekst (bevegelse over tid) og reduserer antall kall.
 - `--max-dimension` skalerer ned bilder før sending for å redusere
   tokenforbruk.
-- Bruk `--max-frames` for å teste verktøyet på en liten del av videoen først.
+- Bruk `--max-frames` og/eller `--dry-run` for å teste verktøyet på en liten
+  del av videoen først, før du kjører hele kampen.
+- Vurder en billigere modell (`--model claude-3-5-haiku-latest`) for grovsortering,
+  og kjør kun de mest interessante periodene på nytt med Sonnet.
 
 ## Prosjektstruktur
 

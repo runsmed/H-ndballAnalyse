@@ -47,6 +47,20 @@ def get_video_duration(video_path: str) -> float:
     return frame_count / fps if fps else 0.0
 
 
+def get_video_info(video_path: str) -> tuple[float, int, int]:
+    """Returner (varighet_sekunder, bredde_px, høyde_px) uten å dekode frames."""
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise IOError(f"Kunne ikke åpne videofil: {video_path}")
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    cap.release()
+    duration = frame_count / fps if fps else 0.0
+    return duration, width, height
+
+
 def _resize(frame, max_dimension: int):
     height, width = frame.shape[:2]
     longest = max(height, width)
