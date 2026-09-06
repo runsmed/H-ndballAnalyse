@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Videofiler og genererte rapporter skal normalt ikke committes
+*.mp4
+*.mov
+*.avi
+*.mkv
+rapport.json
