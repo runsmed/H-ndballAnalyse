@@ -18,6 +18,11 @@ EVENT_TYPES = {
     "tactic_counter_attack": "Kontringsangrep",
     "tactic_set_offense": "Etablert angrep",
     "other": "Annet",
+    # Heuristiske hendelser fra YOLO-basert lokal analyse (ikke semantisk
+    # bekreftet - kun avledet fra ball-/spillerposisjoner og -bevegelse).
+    "heuristic_possible_shot": "Mulig skudd (heuristikk)",
+    "heuristic_fast_break": "Mulig kontring (heuristikk)",
+    "heuristic_high_density": "Høy spillertetthet (heuristikk)",
 }
 
 TACTIC_EVENT_TYPES = {"tactic_press", "tactic_counter_attack", "tactic_set_offense"}

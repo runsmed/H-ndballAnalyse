@@ -8,8 +8,10 @@ import time
 from typing import List, Sequence, Tuple
 
 import anthropic
+import numpy as np
 
 from .events import MatchEvent, format_timestamp
+from .frame_extractor import encode_jpeg
 
 DEFAULT_MODEL = "claude-3-5-sonnet-latest"
 
@@ -58,13 +60,14 @@ class ClaudeVisionAnalyzer:
         self.model = model
         self.max_retries = max_retries
 
-    def analyze_batch(self, frames: Sequence[Tuple[float, bytes]]) -> List[MatchEvent]:
-        """Send en batch (tidsstempel, jpeg_bytes) til Claude og parse hendelser."""
+    def analyze_batch(self, frames: Sequence[Tuple[float, np.ndarray]]) -> List[MatchEvent]:
+        """Send en batch (tidsstempel, frame) til Claude og parse hendelser."""
         if not frames:
             return []
 
         content = []
-        for timestamp, jpeg_bytes in frames:
+        for timestamp, frame in frames:
+            jpeg_bytes = encode_jpeg(frame)
             content.append({
                 "type": "text",
                 "text": f"Bilde ved tidspunkt {format_timestamp(timestamp)} "

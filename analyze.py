@@ -3,10 +3,20 @@
 
 Bruk:
     python analyze.py --video kamp.mp4 --interval 1 --output rapport.json
+
+For å holde kostnaden nede kan du analysere kun utvalgte tidsseksjoner i
+stedet for hele kampen, enten manuelt:
+    python analyze.py --video kamp.mp4 --sections "12:30-13:00,45:10-45:40"
+
+eller basert på forslag fra den gratis, lokale YOLO-analysen
+(se analyze_yolo.py):
+    python analyze_yolo.py --video kamp.mp4 --output yolo_rapport.json
+    python analyze.py --video kamp.mp4 --sections-from-report yolo_rapport.json
 """
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 
@@ -18,6 +28,7 @@ from handball_analyzer.cost_estimator import (
 from handball_analyzer.events import format_timestamp
 from handball_analyzer.frame_extractor import extract_frames, get_video_info
 from handball_analyzer.report import build_report, print_summary, save_report
+from handball_analyzer.sections import format_ranges, parse_time_ranges, total_duration
 from handball_analyzer.vision_analyzer import DEFAULT_MODEL, ClaudeVisionAnalyzer
 
 
@@ -51,6 +62,16 @@ def parse_args() -> argparse.Namespace:
         help="Maks bredde/høyde på frames før sending til API (default: 768px)",
     )
     parser.add_argument(
+        "--sections", default=None,
+        help="Kun analyser disse tidsintervallene, f.eks. '12:30-13:00,45:10-45:40' "
+             "(default: hele videoen)",
+    )
+    parser.add_argument(
+        "--sections-from-report", default=None, metavar="YOLO_RAPPORT.JSON",
+        help="Bruk 'suggested_sections' fra en YOLO-rapport (analyze_yolo.py) i stedet "
+             "for å angi --sections manuelt",
+    )
+    parser.add_argument(
         "--quiet", action="store_true",
         help="Ikke skriv sammendrag til konsoll (kun lagre JSON-rapport)",
     )
@@ -65,6 +86,26 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _resolve_time_ranges(args: argparse.Namespace):
+    if args.sections and args.sections_from_report:
+        raise ValueError("Bruk enten --sections eller --sections-from-report, ikke begge.")
+
+    if args.sections:
+        return parse_time_ranges(args.sections)
+
+    if args.sections_from_report:
+        with open(args.sections_from_report, "r", encoding="utf-8") as f:
+            yolo_report = json.load(f)
+        sections = yolo_report.get("suggested_sections", [])
+        if not sections:
+            raise ValueError(
+                f"Fant ingen 'suggested_sections' i {args.sections_from_report}."
+            )
+        return [(s["start"], s["end"]) for s in sections]
+
+    return None
+
+
 def main() -> int:
     args = parse_args()
 
@@ -73,14 +114,28 @@ def main() -> int:
         return 1
 
     try:
+        time_ranges = _resolve_time_ranges(args)
+    except (ValueError, OSError, json.JSONDecodeError) as exc:
+        print(f"Feil ved lesing av seksjoner: {exc}", file=sys.stderr)
+        return 1
+
+    try:
         duration, orig_width, orig_height = get_video_info(args.video)
     except IOError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
+    if time_ranges:
+        print(f"Analyserer kun {len(time_ranges)} seksjon(er): {format_ranges(time_ranges)}")
+        analyzed_seconds = total_duration(time_ranges)
+    else:
+        analyzed_seconds = duration
+
     # Anslå antall frames uten å dekode hele videoen, slik at vi kan vise et
     # kostnadsanslag før noe faktisk sendes til API-et.
-    estimated_num_frames = int(duration // args.interval) + 1 if duration > 0 else 0
+    estimated_num_frames = (
+        int(analyzed_seconds // args.interval) + 1 if analyzed_seconds > 0 else 0
+    )
     if args.max_frames:
         estimated_num_frames = min(estimated_num_frames, args.max_frames)
 
@@ -112,7 +167,7 @@ def main() -> int:
         return 1
 
     try:
-        frames = list(extract_frames(args.video, args.interval, args.max_dimension))
+        frames = list(extract_frames(args.video, args.interval, args.max_dimension, time_ranges))
     except IOError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -136,8 +191,8 @@ def main() -> int:
 
     for batch_index, batch_start in enumerate(range(0, len(frames), args.batch_size), start=1):
         batch = frames[batch_start: batch_start + args.batch_size]
-        time_range = f"{format_timestamp(batch[0][0])}-{format_timestamp(batch[-1][0])}"
-        print(f"  Batch {batch_index}/{total_batches} ({time_range})...")
+        batch_time_range = f"{format_timestamp(batch[0][0])}-{format_timestamp(batch[-1][0])}"
+        print(f"  Batch {batch_index}/{total_batches} ({batch_time_range})...")
         try:
             events = analyzer.analyze_batch(batch)
         except RuntimeError as exc:
