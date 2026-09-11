@@ -35,6 +35,26 @@ For hvert bilde, vurder om det viser noen av følgende hendelsestyper:
 - tactic_counter_attack: Kontringsangrep
 - tactic_set_offense: Etablert/posisjonsangrep
 
+For hendelser av type goal, shot_on_target, shot_wide, shot_blocked eller
+penalty, angi i tillegg (hvis du kan vurdere det ut fra bildet - ellers
+null, ikke gjett):
+
+shot_zone (heltall) - hvor på banen skuddet ble avfyrt fra, sett fra
+kameraets perspektiv (bildets venstre til høyre, ikke angripende lags
+venstre/høyre):
+  1-5 = mellomdistanse (ca. 6-9 meter fra mål), 5 soner fra venstre til
+        høyre (1=lengst til venstre, 5=lengst til høyre)
+  6-8 = langskudd (mer enn 9 meter fra mål), 3 soner fra venstre til høyre
+  10  = straffekast/7-meter
+  (sone 9 finnes ikke - ikke bruk den)
+
+goal_zone (heltall 1-9) - KUN for goal og shot_on_target (ikke for
+shot_wide/shot_blocked, siden ballen da ikke går i mål) - hvor i målet
+ballen traff/var på vei mot, sett fra kameraets perspektiv:
+  1=nede til venstre, 2=midt til venstre, 3=oppe til venstre,
+  4=nede i midten, 5=midt i midten, 6=oppe i midten,
+  7=nede til høyre, 8=midt til høyre, 9=oppe til høyre
+
 Svar KUN med gyldig JSON: en liste av objekter med feltene
 timestamp (tall, sekunder), event_type (en av nøklene over), description
 (kort norsk beskrivelse av hva som skjer), team ("angripende",
@@ -42,7 +62,8 @@ timestamp (tall, sekunder), event_type (en av nøklene over), description
 sikker du er), jersey_color (fargen på drakten til spilleren involvert i
 hendelsen, f.eks. "rød", "blå", "hvit" - kun hvis du tydelig kan se fargen,
 ellers null), player_number (draktnummeret til spilleren, KUN hvis tallet
-er tydelig lesbart i bildet - IKKE gjett, svar null hvis usikker).
+er tydelig lesbart i bildet - IKKE gjett, svar null hvis usikker),
+shot_zone (se over, ellers null), goal_zone (se over, ellers null).
 
 Hvis ingen hendelser er synlige i bildene, svar med en tom liste: []
 Ikke inkluder forklarende tekst, kun JSON."""

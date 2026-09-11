@@ -134,8 +134,9 @@ def print_summary(report: dict) -> None:
     for event in report["event_log"]:
         team = f" [{event['team']}]" if event.get("team") else ""
         player = _format_player(event)
+        zones = _format_zones(event)
         print(
-            f"  {event['timecode']} - {event['event_type_label']}{team}{player}: "
+            f"  {event['timecode']} - {event['event_type_label']}{team}{player}{zones}: "
             f"{event['description']}"
         )
 
@@ -150,3 +151,14 @@ def _format_player(event: dict) -> str:
     if number:
         return f" (#{number})"
     return ""
+
+
+def _format_zones(event: dict) -> str:
+    shot_zone = event.get("shot_zone")
+    goal_zone = event.get("goal_zone")
+    parts = []
+    if shot_zone is not None:
+        parts.append(f"skuddsone {shot_zone}")
+    if goal_zone is not None:
+        parts.append(f"målsone {goal_zone}")
+    return f" [{', '.join(parts)}]" if parts else ""

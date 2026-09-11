@@ -46,6 +46,8 @@ class MatchEvent:
     confidence: Optional[float] = None
     jersey_color: Optional[str] = None
     player_number: Optional[str] = None
+    shot_zone: Optional[int] = None
+    goal_zone: Optional[int] = None
 
     @property
     def timecode(self) -> str:
@@ -73,10 +75,21 @@ def events_from_raw_list(raw_events: list) -> List["MatchEvent"]:
                 confidence=item.get("confidence"),
                 jersey_color=item.get("jersey_color"),
                 player_number=item.get("player_number"),
+                shot_zone=_parse_optional_int(item.get("shot_zone")),
+                goal_zone=_parse_optional_int(item.get("goal_zone")),
             ))
         except (KeyError, TypeError, ValueError):
             continue
     return events
+
+
+def _parse_optional_int(value) -> Optional[int]:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def parse_json_event_list(text: str) -> List["MatchEvent"]:

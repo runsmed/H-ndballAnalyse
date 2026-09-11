@@ -291,6 +291,42 @@ oppløsning (f.eks. 480p) eller fra avstand er tall ofte for små/uskarpe til
 å leses korrekt. Ikke stol blindt på draktnummer i rapporten uten å
 verifisere mot videoen.
 
+## Hendelsesfelter: skuddsone og målsone (eksperimentelt)
+
+For skudd-relaterte hendelser (`goal`, `shot_on_target`, `shot_wide`,
+`shot_blocked`, `penalty`) forsøker modellen i tillegg å angi:
+
+**`shot_zone`** – hvor på banen skuddet ble avfyrt fra (sett fra kameraets
+perspektiv, altså bildets venstre/høyre – ikke angripende lags
+venstre/høyre):
+
+| Sone | Betydning |
+|------|-----------|
+| 1–5  | Mellomdistanse (ca. 6–9 m fra mål), 5 soner fra venstre til høyre |
+| 6–8  | Langskudd (mer enn 9 m fra mål), 3 soner fra venstre til høyre |
+| 10   | Straffekast/7-meter |
+
+(Det finnes ingen sone 9 i denne skalaen – det er ikke en trykkfeil.)
+
+**`goal_zone`** – hvor i målet ballen traff/var på vei mot (kun for `goal`
+og `shot_on_target`), sett fra kameraets perspektiv, 3×3-rutenett:
+
+| 3 (oppe venstre) | 6 (oppe midt) | 9 (oppe høyre) |
+|---|---|---|
+| **2** (midt venstre) | **5** (midt midt) | **8** (midt høyre) |
+| **1** (nede venstre) | **4** (nede midt) | **7** (nede høyre) |
+
+**Viktig – dette er eksperimentelt og ikke verifisert som pålitelig.** Da
+dette ble testet, rapporterte Gemini 4 mål i en kamp som faktisk endte 0-0 –
+altså en fundamental feil, ikke bare unøyaktighet i detaljer. Det er derfor
+ingen grunn til å anta at presis skudd-/målsoneplassering er mer pålitelig
+enn selve mål-tellingen. Bruk disse feltene som et utgangspunkt for manuell
+gjennomgang, ikke som ferdig statistikk. Presis og pålitelig skuddkart-
+generering (posisjon på banen + plassering i mål) krever i praksis
+kalibrert datasyn (bane-homografi og ball-/spillersporing), ikke bare en
+generell AI-modell som tolker bilder – noe som ligger utenfor dette
+verktøyets nåværende omfang.
+
 ## Begrensninger
 
 - **AI-analysen kan ta feil, også på grunnleggende ting som antall mål** —
