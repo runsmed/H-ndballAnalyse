@@ -2,15 +2,13 @@
 from __future__ import annotations
 
 import base64
-import json
-import re
 import time
 from typing import List, Sequence, Tuple
 
 import anthropic
 import numpy as np
 
-from .events import MatchEvent, format_timestamp
+from .events import MatchEvent, format_timestamp, parse_json_event_list
 from .frame_extractor import encode_jpeg
 
 DEFAULT_MODEL = "claude-3-5-sonnet-latest"
@@ -88,7 +86,7 @@ class ClaudeVisionAnalyzer:
         })
 
         response_text = self._call_with_retry(content)
-        return self._parse_events(response_text)
+        return parse_json_event_list(response_text)
 
     def _call_with_retry(self, content: list) -> str:
         delay = 2.0
@@ -115,28 +113,3 @@ class ClaudeVisionAnalyzer:
                 time.sleep(delay)
                 delay *= 2
         raise RuntimeError(f"Claude API-kall feilet etter flere forsøk: {last_error}")
-
-    @staticmethod
-    def _parse_events(text: str) -> List[MatchEvent]:
-        match = re.search(r"\[.*\]", text, re.DOTALL)
-        json_text = match.group(0) if match else text
-        try:
-            raw_events = json.loads(json_text)
-        except json.JSONDecodeError:
-            return []
-
-        events = []
-        for item in raw_events:
-            if not isinstance(item, dict):
-                continue
-            try:
-                events.append(MatchEvent(
-                    timestamp=float(item["timestamp"]),
-                    event_type=str(item.get("event_type", "other")),
-                    description=str(item.get("description", "")),
-                    team=item.get("team"),
-                    confidence=item.get("confidence"),
-                ))
-            except (KeyError, TypeError, ValueError):
-                continue
-        return events

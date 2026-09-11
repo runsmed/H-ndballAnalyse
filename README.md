@@ -1,17 +1,23 @@
 # Håndballanalyse
 
-Python-verktøy som analyserer video av håndballkamper med AI. To trinn:
+Python-verktøy som analyserer video av håndballkamper med AI. Tre verktøy,
+velg det som passer:
 
 1. **`analyze_yolo.py`** – lokal, **gratis** forhåndsanalyse med YOLO
    (objektgjenkjenning). Finner ball og spillere, og foreslår tidsseksjoner
    med sannsynlig aktivitet (skudd, kontring, tett spill) helt uten
    API-kostnad.
-2. **`analyze.py`** – sender frames til Claude for faktisk klassifisering av
-   hendelser (mål, skudd, frikast, utvisning, taktikk). Kan kjøres på hele
+2. **`analyze.py`** – sender frames til **Claude** for faktisk klassifisering
+   av hendelser (mål, skudd, frikast, utvisning, taktikk). Kan kjøres på hele
    kampen, eller kun på seksjonene YOLO foreslo – noe som kutter
-   API-kostnaden kraftig.
+   API-kostnaden kraftig. Krever betalt API-nøkkel (pay-as-you-go).
+3. **`analyze_gemini.py`** – sender **hele videofilen** direkte til **Google
+   Gemini**, som selv sampler frames internt. Enklere oppsett (ingen
+   frame-ekstraksjon/YOLO nødvendig), og Gemini har et gratis API-nivå
+   (Flash-modeller, med lave hastighetsgrenser) i tillegg til betalt bruk.
 
 ```
+Alternativ A - Claude (mest presist, koster fra første token):
                  GRATIS, lokalt                 KOSTER API-tokens
 video.mp4  ──▶  analyze_yolo.py  ──▶  yolo_rapport.json (foreslåtte seksjoner)
                                               │
@@ -20,6 +26,9 @@ video.mp4  ──▶  analyze_yolo.py  ──▶  yolo_rapport.json (foreslåtte
                                               │
                                               ▼
                                        rapport.json (mål, skudd, frikast, taktikk)
+
+Alternativ B - Gemini (enklest, ofte gratis innenfor kvote):
+video.mp4  ──▶  analyze_gemini.py  ──▶  rapport_gemini.json
 ```
 
 ## Funksjonalitet
@@ -60,6 +69,26 @@ målsone"), ikke bekreftede hendelser som mål, frikast eller utvisning. Den
 er ment som et gratis filter for å finne *hvor* i videoen noe skjer – Claude
 avgjør fortsatt *hva* som faktisk skjer.
 
+### Gemini-analyse (analyze_gemini.py) – hel video, ofte gratis
+
+1. Tar inn en videofil og laster den opp direkte til Gemini (ingen egen
+   frame-ekstraksjon)
+2. Gemini sampler selv bilder internt fra videoen (standard 1/sekund) og
+   identifiserer samme hendelsestyper som Claude-varianten over
+3. Lange kamper deles automatisk opp i tidsbolker (`--chunk-seconds`, default
+   10 min) og analyseres med flere påfølgende kall
+4. Genererer samme type kamprapport (JSON) som de andre verktøyene
+
+**Viktig om Gemini-kostnad:** Google sitt gratis API-nivå gjelder kun
+*Flash*-modeller, har lave hastighetsgrenser (typisk 10-15 forespørsler i
+minuttet), og skifter jevnlig hvilken modell som er "gratis-modellen".
+Dette verktøyet bruker som standard modellalias-et `gemini-flash-latest`,
+som Google selv holder oppdatert mot nyeste Flash-modell. **En betalt
+Google AI Pro/Ultra-abonnement for Gemini-*appen* (chat) er en egen
+tjeneste og gir ikke automatisk gratis/utvidet API-tilgang** – sjekk din
+kvote på [aistudio.google.com](https://aistudio.google.com/apikey) med
+samme konto for å se hva du faktisk har tilgjengelig.
+
 ## Oppsett
 
 ```bash
@@ -68,13 +97,17 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Sett API-nøkkelen din som miljøvariabel:
+Sett API-nøkkelen(e) du trenger som miljøvariabel:
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+export ANTHROPIC_API_KEY=sk-ant-...      # for analyze.py (Claude)
+export GEMINI_API_KEY=...                # for analyze_gemini.py (Gemini) - gratis å opprette på aistudio.google.com/apikey
 ```
 
-(Se `.env.example` for referanse — verktøyet leser variabelen direkte fra
+Du trenger kun nøkkelen for det verktøyet du faktisk skal bruke – `analyze_yolo.py`
+krever ingen av dem.
+
+(Se `.env.example` for referanse — verktøyet leser variablene direkte fra
 miljøet, det brukes ikke noe `.env`-bibliotek.)
 
 ## Bruk
@@ -96,6 +129,12 @@ python analyze.py --video kamp.mp4 --interval 1 --output rapport.json
 
 # eller kun en manuelt valgt del av kampen:
 python analyze.py --video kamp.mp4 --sections "12:30-13:00,45:10-45:40" --output rapport.json
+```
+
+### Alternativ: Gemini på hele kampen i ett steg (enklest, ofte gratis)
+
+```bash
+python analyze_gemini.py --video kamp.mp4 --output rapport_gemini.json
 ```
 
 ### Argumenter: analyze_yolo.py (gratis, lokal)
@@ -130,6 +169,18 @@ python analyze.py --video kamp.mp4 --sections "12:30-13:00,45:10-45:40" --output
 | `--quiet`                | Ikke skriv sammendrag til konsoll                                    | av                    |
 | `--dry-run`              | Vis kostnadsanslag og avslutt uten å kalle Claude API                | av                    |
 | `-y`, `--yes`            | Ikke spør om bekreftelse før API-kall (for skript/CI)                | av                    |
+
+### Argumenter: analyze_gemini.py (Gemini, hel video)
+
+| Flagg              | Beskrivelse                                                          | Default               |
+|--------------------|-------------------------------------------------------------------------|-------------------------|
+| `--video`          | Sti til videofil (påkrevd)                                              | –                       |
+| `--output`         | Filsti for JSON-rapport                                                  | `rapport_gemini.json`   |
+| `--model`          | Gemini-modell som brukes                                                 | `gemini-flash-latest`   |
+| `--chunk-seconds`  | Sekunder video analysert per API-kall (lengre kamper deles opp)          | `600` (10 min)          |
+| `--fps`            | Bilder/sekund Gemini sampler internt fra videoen (maks 24.0)             | `1.0`                   |
+| `--quiet`          | Ikke skriv sammendrag til konsoll                                        | av                      |
+| `-y`, `--yes`      | Ikke spør om bekreftelse før API-kall (for skript/CI)                    | av                      |
 
 ### Eksempel: rask test på et kort klipp
 
@@ -181,6 +232,18 @@ Bytt til en billigere modell (f.eks. `--model claude-3-5-haiku-latest`) for
 et førsteutkast eller for testing – det kutter kostnaden med 70–80 %, på
 bekostning av noe nøyaktighet.
 
+### Gemini som gratis(ere) alternativ
+
+`analyze_gemini.py` bruker Googles gratis API-nivå for Flash-modeller når du
+er innenfor kvoten – ofte reelt gratis for en enkelt kamp, i motsetning til
+Claude som alltid koster fra første kall. Ulempene: lav hastighetsgrense på
+gratis-nivået (så en lang kamp kan ta noen minutter pga. venting mellom
+kall), og modellnavnene/kvotene Google tilbyr gratis endres oftere enn hos
+Anthropic – sjekk alltid [aistudio.google.com](https://aistudio.google.com/apikey)
+for gjeldende status før du kjører en lang kamp. Nøyaktigheten kan også
+avvike noe fra Claude – sammenlign gjerne begge på samme testklipp første
+gang.
+
 ### Anbefalinger for å holde kostnaden nede
 
 - **Kjør `analyze_yolo.py` først** – helt gratis, og gir deg konkrete
@@ -203,13 +266,15 @@ bekostning av noe nøyaktighet.
 ```
 analyze.py                        CLI: Claude-analyse (koster API-tokens)
 analyze_yolo.py                   CLI: YOLO-forhåndsanalyse (gratis, lokal)
+analyze_gemini.py                 CLI: Gemini-analyse (hel video, ofte gratis innenfor kvote)
 handball_analyzer/
   frame_extractor.py              Frame-ekstraksjon med OpenCV (hele video eller seksjoner)
   yolo_analyzer.py                YOLO-deteksjon/-sporing + heuristikker (skudd, kontring, tetthet)
   vision_analyzer.py              Claude API-integrasjon (batching, retry, parsing)
-  cost_estimator.py               Kostnadsanslag før API-kall
+  gemini_analyzer.py              Gemini API-integrasjon (hel-video-opplasting, chunking, retry)
+  cost_estimator.py               Kostnadsanslag før API-kall (Claude)
   sections.py                     Parsing/sammenslåing av tidsseksjoner
-  events.py                       Datamodell for hendelser
+  events.py                       Datamodell for hendelser + delt JSON-parsing
   report.py                       Rapportbygging (statistikk, taktiske observasjoner)
 requirements.txt
 .env.example
@@ -235,3 +300,9 @@ requirements.txt
   og "sports ball", ikke håndballspesifikke ting som mål, dommer eller
   draktnummer. Nøyaktigheten på ballgjenkjenning kan variere med
   kameravinkel, avstand og bildekvalitet.
+- **Gemini-integrasjonen er nyere og mindre gjennomtestet i praksis** enn
+  Claude-delen (verifisert mot SDK-et, men ikke kjørt mot ekte kampvideo med
+  en reell API-nøkkel i utviklingen av dette verktøyet). Modellnavn, gratis
+  kvoter og API-form hos Google endres også oftere enn hos Anthropic – test
+  gjerne på et kort klipp først (`--chunk-seconds` satt lavt) før du kjører
+  en hel kamp.

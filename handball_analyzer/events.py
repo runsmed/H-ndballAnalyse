@@ -1,8 +1,10 @@
 """Datamodell for hendelser identifisert i en håndballkamp."""
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass, asdict
-from typing import Optional
+from typing import List, Optional
 
 EVENT_TYPES = {
     "goal": "Mål",
@@ -52,3 +54,33 @@ class MatchEvent:
         data["timecode"] = self.timecode
         data["event_type_label"] = EVENT_TYPES.get(self.event_type, self.event_type)
         return data
+
+
+def events_from_raw_list(raw_events: list) -> List["MatchEvent"]:
+    """Bygg MatchEvent-objekter fra en rå liste med dicts (fra en LLM-respons)."""
+    events: List[MatchEvent] = []
+    for item in raw_events:
+        if not isinstance(item, dict):
+            continue
+        try:
+            events.append(MatchEvent(
+                timestamp=float(item["timestamp"]),
+                event_type=str(item.get("event_type", "other")),
+                description=str(item.get("description", "")),
+                team=item.get("team"),
+                confidence=item.get("confidence"),
+            ))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return events
+
+
+def parse_json_event_list(text: str) -> List["MatchEvent"]:
+    """Parse en LLM-respons (evt. med omkringliggende tekst/kodeblokker) til hendelser."""
+    match = re.search(r"\[.*\]", text, re.DOTALL)
+    json_text = match.group(0) if match else text
+    try:
+        raw_events = json.loads(json_text)
+    except json.JSONDecodeError:
+        return []
+    return events_from_raw_list(raw_events)
