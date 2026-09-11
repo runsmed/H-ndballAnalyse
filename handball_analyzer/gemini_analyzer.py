@@ -48,6 +48,28 @@ hendelsestyper:
 - tactic_counter_attack: Kontringsangrep
 - tactic_set_offense: Etablert/posisjonsangrep
 
+VIKTIG - bruk lyd og dommertegn som primære bevis, ikke bare ballbevegelse:
+Videoen har lydspor. Lytt etter dommerens FLØYTESIGNAL - det markerer at
+spillet er stoppet og er en mye sterkere indikator på frikast, straffe,
+utvisning, ballen ute, eller timeout enn å gjette ut fra bildet alene. Et
+MÅL blir derimot ofte IKKE fløytet - det bekreftes normalt ved at dommeren
+peker mot midten av banen, og/eller ved lyd fra resultattavle/sekretariat.
+Ikke bruk fravær av fløyte som bevis mot at det ble scoret mål.
+
+Etter en fløyte, se på dommerens HÅNDTEGN (offisielle IHF-signaler) for å
+avgjøre nøyaktig hendelsestype:
+- Arm strukket ut, peker i angrepsretning = frikast (free_throw)
+- Arm/hånd peker nedover mot straffemerket (7-meter) = straffekast (penalty)
+- Arm løftet med 2 fingre vist = utvisning 2 minutter (exclusion)
+- Peker mot midten av banen = mål (goal)
+- Hendene formet som en T = timeout (ikke en egen hendelsestype her, kan
+  nevnes i description)
+
+Bruk fløyte+håndtegn som HOVEDBEVIS når de er tydelig hørbare/synlige - de
+er langt mer pålitelige enn å tolke ballbevegelse. Sett høyere confidence
+når du faktisk hørte fløyten og så et tydelig håndtegn, lavere confidence
+hvis du kun gjetter ut fra spillsituasjonen.
+
 For hendelser av type goal, shot_on_target, shot_wide, shot_blocked eller
 penalty, angi i tillegg (hvis du kan vurdere det ut fra videoen - ellers
 null, ikke gjett):
@@ -75,7 +97,10 @@ norsk beskrivelse av hva som skjer), team ("angripende", "forsvarende"
 eller null hvis ukjent), confidence (flyttall 0-1 for hvor sikker du er),
 jersey_color (fargen på drakten til spilleren involvert i hendelsen, f.eks.
 "rød", "blå", "hvit" - kun hvis du tydelig kan se fargen, ellers null),
-player_number (draktnummeret til spilleren, KUN hvis tallet er tydelig
+player_number (draktnummeret til spilleren - for goal/shot_on_target/
+shot_wide/shot_blocked/penalty er dette SKYTTERENS nummer, altså spilleren
+som avfyrte skuddet, ikke andre spillere i bildet; for andre hendelser som
+exclusion er det spilleren hendelsen gjelder. KUN hvis tallet er tydelig
 lesbart i videoen - IKKE gjett, svar null hvis usikker), shot_zone (se
 over, ellers null), goal_zone (se over, ellers null).
 

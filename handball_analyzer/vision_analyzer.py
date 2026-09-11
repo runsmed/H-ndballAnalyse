@@ -35,6 +35,17 @@ For hvert bilde, vurder om det viser noen av følgende hendelsestyper:
 - tactic_counter_attack: Kontringsangrep
 - tactic_set_offense: Etablert/posisjonsangrep
 
+VIKTIG - bruk dommerens håndtegn som bevis når det er synlig i bildet
+(disse bildene har INGEN lyd, så du kan ikke høre fløyten - se etter selve
+håndtegnet, som ofte vises noen sekunder etter at spillet er stoppet).
+Offisielle IHF-håndtegn:
+- Arm strukket ut, peker i angrepsretning = frikast (free_throw)
+- Arm/hånd peker nedover mot straffemerket (7-meter) = straffekast (penalty)
+- Arm løftet med 2 fingre vist = utvisning 2 minutter (exclusion)
+- Peker mot midten av banen = mål (goal)
+Et tydelig håndtegn er et sterkere bevis enn å gjette ut fra ballbevegelse
+alene - sett høyere confidence når du faktisk ser et slikt tegn.
+
 For hendelser av type goal, shot_on_target, shot_wide, shot_blocked eller
 penalty, angi i tillegg (hvis du kan vurdere det ut fra bildet - ellers
 null, ikke gjett):
@@ -61,8 +72,11 @@ timestamp (tall, sekunder), event_type (en av nøklene over), description
 "forsvarende" eller null hvis ukjent), confidence (flyttall 0-1 for hvor
 sikker du er), jersey_color (fargen på drakten til spilleren involvert i
 hendelsen, f.eks. "rød", "blå", "hvit" - kun hvis du tydelig kan se fargen,
-ellers null), player_number (draktnummeret til spilleren, KUN hvis tallet
-er tydelig lesbart i bildet - IKKE gjett, svar null hvis usikker),
+ellers null), player_number (draktnummeret til spilleren - for goal/
+shot_on_target/shot_wide/shot_blocked/penalty er dette SKYTTERENS nummer,
+altså spilleren som avfyrte skuddet, ikke andre spillere i bildet; for
+andre hendelser som exclusion er det spilleren hendelsen gjelder. KUN hvis
+tallet er tydelig lesbart i bildet - IKKE gjett, svar null hvis usikker),
 shot_zone (se over, ellers null), goal_zone (se over, ellers null).
 
 Hvis ingen hendelser er synlige i bildene, svar med en tom liste: []

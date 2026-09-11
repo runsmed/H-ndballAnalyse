@@ -327,6 +327,36 @@ kalibrert datasyn (bane-homografi og ball-/spillersporing), ikke bare en
 generell AI-modell som tolker bilder – noe som ligger utenfor dette
 verktøyets nåværende omfang.
 
+## Dommertegn og fløytesignal (kun Gemini har lyd)
+
+Begge verktøyene er instruert til å bruke dommerens offisielle IHF-håndtegn
+som bevis for hendelsestype (peker i angrepsretning = frikast, peker ned
+mot 7-meter = straffe, løfter arm med 2 fingre = utvisning, peker mot
+midten = mål) – dette er ofte et mer pålitelig signal enn å gjette ut fra
+ballbevegelse alene.
+
+**Kun `analyze_gemini.py` kan i tillegg bruke lyd** – siden hele videofilen
+lastes opp dit, mottar Gemini lydsporet sammen med bildet, og er instruert
+til å lytte etter dommerens **fløytesignal** for å oppdage at spillet er
+stoppet (frikast/straffe/utvisning/ball ute), kombinert med håndtegnet som
+følger. Merk: et **mål blir normalt IKKE fløytet** i håndball – det
+bekreftes ved at dommeren peker mot midten og/eller lyd fra resultattavlen,
+så fravær av fløyte er ikke bevis mot at det ble scoret.
+
+**`analyze.py` (Claude) har ingen lyd** – frame-ekstraksjonen vår trekker
+kun ut stillbilder, ikke lyd, og Claude API-et tar uansett ikke imot lyd
+som input. Claude kan derfor kun bruke dommerens håndtegn hvis det tilfeldigvis
+fanges opp i et av de analyserte bildene, ikke fløyten. Å legge til
+lydstøtte for Claude ville kreve en egen lydekstraksjon/-analyse og er ikke
+implementert.
+
+Draktnummeret (`player_number`) refererer nå spesifikt til **skytterens**
+nummer for skudd-relaterte hendelser (goal, shot_on_target, shot_wide,
+shot_blocked, penalty).
+
+Dette er, som resten av skudd-/målsonefeltene, **ikke verifisert som
+pålitelig** – test og sammenlign mot videoen din.
+
 ## Begrensninger
 
 - **AI-analysen kan ta feil, også på grunnleggende ting som antall mål** —
