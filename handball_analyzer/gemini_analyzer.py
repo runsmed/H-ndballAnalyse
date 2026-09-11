@@ -83,12 +83,20 @@ venstre/høyre):
   10  = straffekast/7-meter
   (sone 9 finnes ikke - ikke bruk den)
 
-goal_zone (heltall 1-9) - KUN for goal og shot_on_target (ikke for
-shot_wide/shot_blocked, siden ballen da ikke går i mål) - hvor i målet
-ballen traff/var på vei mot, sett fra kameraets perspektiv:
+goal_zone (heltall 1-9) - hvor i målet ballen var på vei mot, sett fra
+kameraets perspektiv:
   1=nede til venstre, 2=midt til venstre, 3=oppe til venstre,
   4=nede i midten, 5=midt i midten, 6=oppe i midten,
   7=nede til høyre, 8=midt til høyre, 9=oppe til høyre
+
+VIKTIG: goal_zone skal ALLTID fylles ut for shot_on_target, INKLUDERT når
+keeper redder skuddet - da er goal_zone stedet ballen var på vei mot FØR
+keeper reddet den, altså nøyaktig der keeper dekket. Dette er spesielt
+verdifull informasjon for keeper-analyse (hvilke soner keeperen dekker
+godt/dårlig), så ikke hopp over dette feltet bare fordi skuddet ble reddet.
+Fyll også ut for goal. IKKE fyll ut for shot_wide/shot_blocked (ballen gikk
+da ikke mot en definerbar målsone) eller penalty med mindre skuddretningen
+er tydelig synlig.
 
 Svar KUN med gyldig JSON: en liste av objekter med feltene
 timestamp (tall, ABSOLUTT sekund fra start av HELE kampen - ikke fra start
