@@ -133,7 +133,20 @@ def print_summary(report: dict) -> None:
     print("\nHendelseslogg:")
     for event in report["event_log"]:
         team = f" [{event['team']}]" if event.get("team") else ""
+        player = _format_player(event)
         print(
-            f"  {event['timecode']} - {event['event_type_label']}{team}: "
+            f"  {event['timecode']} - {event['event_type_label']}{team}{player}: "
             f"{event['description']}"
         )
+
+
+def _format_player(event: dict) -> str:
+    color = event.get("jersey_color")
+    number = event.get("player_number")
+    if color and number:
+        return f" ({color} #{number})"
+    if color:
+        return f" ({color} drakt)"
+    if number:
+        return f" (#{number})"
+    return ""

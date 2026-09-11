@@ -280,8 +280,23 @@ requirements.txt
 .env.example
 ```
 
+## Hendelsesfelter: draktfarge og draktnummer
+
+Hver hendelse i `event_log` kan inneholde `jersey_color` (f.eks. "rød",
+"blå") og `player_number` (draktnummer) når disse er tydelig synlige i
+bildet/videoen. Modellene er instruert til å svare `null` fremfor å gjette
+når de er usikre. **Draktfarge er vanligvis pålitelig** (store, tydelige
+fargeflater), mens **draktnummer er langt mer usikkert** — på lavere
+oppløsning (f.eks. 480p) eller fra avstand er tall ofte for små/uskarpe til
+å leses korrekt. Ikke stol blindt på draktnummer i rapporten uten å
+verifisere mot videoen.
+
 ## Begrensninger
 
+- **AI-analysen kan ta feil, også på grunnleggende ting som antall mål** —
+  test alltid resultatet manuelt mot et kjent klipp før du stoler på en full
+  kamprapport. Lavere oppløsning, rask kameraføring og lav samplingsrate
+  (bilder/sekund) øker sjansen for feil.
 - Analysen er basert på enkeltbilder/korte bildesekvenser og er ikke like
   presis som manuell videoanalyse eller sporingsdata — bruk rapporten som et
   hjelpemiddel/utgangspunkt, ikke en fasit.

@@ -52,7 +52,11 @@ Svar KUN med gyldig JSON: en liste av objekter med feltene
 timestamp (tall, ABSOLUTT sekund fra start av HELE kampen - ikke fra start
 av segmentet du fikk), event_type (en av nøklene over), description (kort
 norsk beskrivelse av hva som skjer), team ("angripende", "forsvarende"
-eller null hvis ukjent), confidence (flyttall 0-1 for hvor sikker du er).
+eller null hvis ukjent), confidence (flyttall 0-1 for hvor sikker du er),
+jersey_color (fargen på drakten til spilleren involvert i hendelsen, f.eks.
+"rød", "blå", "hvit" - kun hvis du tydelig kan se fargen, ellers null),
+player_number (draktnummeret til spilleren, KUN hvis tallet er tydelig
+lesbart i videoen - IKKE gjett, svar null hvis usikker).
 
 Hvis ingen hendelser er synlige i segmentet, svar med en tom liste: []
 Ikke inkluder forklarende tekst, kun JSON."""

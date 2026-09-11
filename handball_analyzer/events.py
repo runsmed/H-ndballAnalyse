@@ -44,6 +44,8 @@ class MatchEvent:
     description: str
     team: Optional[str] = None
     confidence: Optional[float] = None
+    jersey_color: Optional[str] = None
+    player_number: Optional[str] = None
 
     @property
     def timecode(self) -> str:
@@ -69,6 +71,8 @@ def events_from_raw_list(raw_events: list) -> List["MatchEvent"]:
                 description=str(item.get("description", "")),
                 team=item.get("team"),
                 confidence=item.get("confidence"),
+                jersey_color=item.get("jersey_color"),
+                player_number=item.get("player_number"),
             ))
         except (KeyError, TypeError, ValueError):
             continue
