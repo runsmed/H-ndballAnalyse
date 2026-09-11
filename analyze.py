@@ -27,6 +27,10 @@ from handball_analyzer.cost_estimator import (
 )
 from handball_analyzer.events import format_timestamp
 from handball_analyzer.frame_extractor import extract_frames, get_video_info
+from handball_analyzer.reference_examples import (
+    build_reference_prompt_text,
+    load_reference_examples,
+)
 from handball_analyzer.report import build_report, print_summary, save_report
 from handball_analyzer.sections import format_ranges, parse_time_ranges, total_duration
 from handball_analyzer.vision_analyzer import DEFAULT_MODEL, ClaudeVisionAnalyzer
@@ -70,6 +74,11 @@ def parse_args() -> argparse.Namespace:
         "--sections-from-report", default=None, metavar="YOLO_RAPPORT.JSON",
         help="Bruk 'suggested_sections' fra en YOLO-rapport (analyze_yolo.py) i stedet "
              "for å angi --sections manuelt",
+    )
+    parser.add_argument(
+        "--reference", action="append", default=[], metavar="RETTET_RAPPORT.JSON",
+        help="Sti til en tidligere, manuelt rettet kamprapport som brukes som "
+             "few-shot-eksempel i prompten (kan gjentas for flere eksempler)",
     )
     parser.add_argument(
         "--quiet", action="store_true",
@@ -118,6 +127,15 @@ def main() -> int:
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         print(f"Feil ved lesing av seksjoner: {exc}", file=sys.stderr)
         return 1
+
+    try:
+        reference_examples = load_reference_examples(args.reference)
+    except (ValueError, OSError, json.JSONDecodeError) as exc:
+        print(f"Feil ved lesing av referanseeksempel: {exc}", file=sys.stderr)
+        return 1
+    reference_text = build_reference_prompt_text(reference_examples)
+    if reference_examples:
+        print(f"Bruker {len(reference_examples)} referanseeksempel(er): {', '.join(args.reference)}")
 
     try:
         duration, orig_width, orig_height = get_video_info(args.video)
@@ -185,7 +203,7 @@ def main() -> int:
         f"modell: {args.model})..."
     )
 
-    analyzer = ClaudeVisionAnalyzer(api_key=api_key, model=args.model)
+    analyzer = ClaudeVisionAnalyzer(api_key=api_key, model=args.model, reference_text=reference_text)
     all_events = []
     total_batches = (len(frames) + args.batch_size - 1) // args.batch_size
 

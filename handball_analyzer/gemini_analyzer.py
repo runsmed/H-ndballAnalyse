@@ -127,11 +127,13 @@ class GeminiVideoAnalyzer:
         model: str = DEFAULT_MODEL,
         max_retries: int = 4,
         request_delay_seconds: float = 7.0,
+        reference_text: Optional[str] = None,
     ):
         self.client = genai.Client(api_key=api_key) if api_key else genai.Client()
         self.model = model
         self.max_retries = max_retries
         self.request_delay_seconds = request_delay_seconds
+        self.system_prompt = SYSTEM_PROMPT + (reference_text or "")
 
     def upload_video(self, video_path: str) -> types.File:
         """Last opp videofilen og vent til Gemini har gjort den klar for analyse."""
@@ -182,7 +184,7 @@ class GeminiVideoAnalyzer:
                     model=self.model,
                     contents=[video_part, prompt_text],
                     config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_PROMPT,
+                        system_instruction=self.system_prompt,
                         response_mime_type="application/json",
                     ),
                 )

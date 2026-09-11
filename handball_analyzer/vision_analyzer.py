@@ -99,10 +99,12 @@ class ClaudeVisionAnalyzer:
         api_key: str | None = None,
         model: str = DEFAULT_MODEL,
         max_retries: int = 4,
+        reference_text: str | None = None,
     ):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
         self.max_retries = max_retries
+        self.system_prompt = SYSTEM_PROMPT + (reference_text or "")
 
     def analyze_batch(self, frames: Sequence[Tuple[float, np.ndarray]]) -> List[MatchEvent]:
         """Send en batch (tidsstempel, frame) til Claude og parse hendelser."""
@@ -142,7 +144,7 @@ class ClaudeVisionAnalyzer:
                 response = self.client.messages.create(
                     model=self.model,
                     max_tokens=2048,
-                    system=SYSTEM_PROMPT,
+                    system=self.system_prompt,
                     messages=[{"role": "user", "content": content}],
                 )
                 return "".join(

@@ -166,6 +166,7 @@ python analyze_gemini.py --video kamp.mp4 --output rapport_gemini.json
 | `--max-dimension`        | Maks bredde/høyde på frames før sending (px)                         | `768`                 |
 | `--sections`             | Kun analyser disse tidsintervallene, f.eks. `"12:30-13:00,45:10-45:40"` | hele videoen       |
 | `--sections-from-report` | Bruk `suggested_sections` fra en YOLO-rapport i stedet for `--sections` | –                  |
+| `--reference`            | Sti til en tidligere, manuelt rettet kamprapport brukt som few-shot-eksempel (kan gjentas) | ingen |
 | `--quiet`                | Ikke skriv sammendrag til konsoll                                    | av                    |
 | `--dry-run`              | Vis kostnadsanslag og avslutt uten å kalle Claude API                | av                    |
 | `-y`, `--yes`            | Ikke spør om bekreftelse før API-kall (for skript/CI)                | av                    |
@@ -179,6 +180,7 @@ python analyze_gemini.py --video kamp.mp4 --output rapport_gemini.json
 | `--model`          | Gemini-modell som brukes                                                 | `gemini-flash-latest`   |
 | `--chunk-seconds`  | Sekunder video analysert per API-kall (lengre kamper deles opp)          | `600` (10 min)          |
 | `--fps`            | Bilder/sekund Gemini sampler internt fra videoen (maks 24.0)             | `1.0`                   |
+| `--reference`      | Sti til en tidligere, manuelt rettet kamprapport brukt som few-shot-eksempel (kan gjentas) | ingen |
 | `--quiet`          | Ikke skriv sammendrag til konsoll                                        | av                      |
 | `-y`, `--yes`      | Ikke spør om bekreftelse før API-kall (for skript/CI)                    | av                      |
 
@@ -326,6 +328,40 @@ generering (posisjon på banen + plassering i mål) krever i praksis
 kalibrert datasyn (bane-homografi og ball-/spillersporing), ikke bare en
 generell AI-modell som tolker bilder – noe som ligger utenfor dette
 verktøyets nåværende omfang.
+
+## Referanseeksempler (few-shot) – "lære opp" verktøyet over tid
+
+Claude og Gemini er ferdigtrente modeller du bruker via API – de lærer
+**ikke** automatisk av tidligere kamper eller husker noe mellom kjøringer.
+Det finnes ingen ekte "tren opp AI-en"-mekanisme her. Det vi derimot kan
+gjøre er å sende med tidligere **manuelt rettede** kamprapporter som
+eksempler i selve forespørselen ("few-shot"-prompting) – dette hjelper
+modellen kalibrere format og presisjonsnivå (bl.a. at `goal_zone` skal
+fylles ut selv ved reddede skudd), men er ikke det samme som at modellen
+faktisk blir smartere av seg selv.
+
+**Slik lager du et referanseeksempel:**
+
+1. Kjør en vanlig analyse: `python analyze_gemini.py --video kamp.mp4 --output rapport1.json`
+2. Åpne `rapport1.json` og rett opp `event_log` for hånd mot det du faktisk
+   så i videoen – fjern feilaktige hendelser, legg til de som mangler,
+   korriger `team`/`jersey_color`/`player_number`/`shot_zone`/`goal_zone`
+3. Legg gjerne til et `"context"`-felt øverst i filen med en kort
+   beskrivelse av klippet, f.eks.:
+   ```json
+   {
+     "context": "Hvit drakt vs mørkeblå drakt, kamera fra sidelinjen, bredt utsnitt",
+     "video": "kamp.mp4",
+     "event_log": [ ... rettet ... ]
+   }
+   ```
+4. Bruk den rettede filen som referanse på neste kjøring:
+   ```bash
+   python analyze_gemini.py --video kamp2.mp4 --reference rapport1.json --output rapport2.json
+   ```
+   `--reference` kan gjentas for å sende med flere eksempler samtidig (vær
+   obs på at hvert eksempel legger til noen ekstra input-tokens per
+   API-kall, så bruk 1-3 gode eksempler heller enn mange).
 
 ## Dommertegn og fløytesignal (kun Gemini har lyd)
 

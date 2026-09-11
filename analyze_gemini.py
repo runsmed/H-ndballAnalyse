@@ -20,11 +20,16 @@ Google selv oppdaterer til å peke på nyeste Flash-modell.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 
 from handball_analyzer.frame_extractor import get_video_duration
 from handball_analyzer.gemini_analyzer import DEFAULT_MODEL, GeminiVideoAnalyzer
+from handball_analyzer.reference_examples import (
+    build_reference_prompt_text,
+    load_reference_examples,
+)
 from handball_analyzer.report import build_report, print_summary, save_report
 
 
@@ -49,6 +54,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--fps", type=float, default=1.0,
         help="Bilder per sekund Gemini sampler internt fra videoen (default: 1.0, maks 24.0)",
+    )
+    parser.add_argument(
+        "--reference", action="append", default=[], metavar="RETTET_RAPPORT.JSON",
+        help="Sti til en tidligere, manuelt rettet kamprapport som brukes som "
+             "few-shot-eksempel i prompten (kan gjentas for flere eksempler)",
     )
     parser.add_argument(
         "--quiet", action="store_true",
@@ -83,6 +93,15 @@ def main() -> int:
         print(str(exc), file=sys.stderr)
         return 1
 
+    try:
+        reference_examples = load_reference_examples(args.reference)
+    except (ValueError, OSError, json.JSONDecodeError) as exc:
+        print(f"Feil ved lesing av referanseeksempel: {exc}", file=sys.stderr)
+        return 1
+    reference_text = build_reference_prompt_text(reference_examples)
+    if reference_examples:
+        print(f"Bruker {len(reference_examples)} referanseeksempel(er): {', '.join(args.reference)}")
+
     num_chunks = max(1, int(-(-duration // args.chunk_seconds))) if duration > 0 else 1
     print(
         f"Video: {args.video} ({duration:.0f} sekunder)\n"
@@ -101,7 +120,7 @@ def main() -> int:
             print("Avbrutt av bruker.")
             return 0
 
-    analyzer = GeminiVideoAnalyzer(api_key=api_key, model=args.model)
+    analyzer = GeminiVideoAnalyzer(api_key=api_key, model=args.model, reference_text=reference_text)
 
     def on_progress(chunk_index: int, total_chunks: int, start: float, end: float) -> None:
         print(f"  Segment {chunk_index}/{total_chunks} ({start:.0f}s-{end:.0f}s)...")
