@@ -42,6 +42,8 @@ hendelsestyper:
 - free_throw: Frikast
 - exclusion: Utvisning (2 minutter)
 - penalty: Straffekast
+- turnover: Ballmisting/pasningsfeil (ball ut over sidelinjen, feilpasning,
+  teknisk feil som gir ballen til motstander - uten at det er frikast)
 - numerical_advantage: Tydelig overtallssituasjon for angripende lag
 - numerical_disadvantage: Tydelig undertallssituasjon for angripende lag
 - tactic_press: Presspill/høyt forsvar

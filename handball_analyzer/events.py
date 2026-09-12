@@ -14,6 +14,7 @@ EVENT_TYPES = {
     "free_throw": "Frikast",
     "exclusion": "Utvisning (2 min)",
     "penalty": "Straffekast",
+    "turnover": "Ballmisting/pasningsfeil",
     "numerical_advantage": "Overtall",
     "numerical_disadvantage": "Undertall",
     "tactic_press": "Press",

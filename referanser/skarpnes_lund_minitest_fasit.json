@@ -1,0 +1,133 @@
+{
+  "context": "Skarpnes vs Lund, 480p opptak, ca. 3 min klipp. Hvit og svart drakter. Kampen sto 0-0 gjennom hele klippet - ingen mål ble scoret, kun skudd, redninger, en bom straffe og noen ballmistelser/pasningsfeil.",
+  "video": "Skarpnes_Lund 480_MiniTEST.mp4",
+  "duration_seconds": 182.2,
+  "duration_formatted": "03:02",
+  "total_events": 9,
+  "statistics": {
+    "Ballmisting/pasningsfeil": 3,
+    "Skudd på mål": 3,
+    "Straffekast": 2,
+    "Skudd utenfor": 1
+  },
+  "tactical_observations": [],
+  "event_log": [
+    {
+      "timestamp": 10,
+      "event_type": "turnover",
+      "description": "Spiller kaster ballen over sidelinjen (utspill til motstander)",
+      "team": "angripende",
+      "confidence": 1.0,
+      "jersey_color": "hvit",
+      "player_number": "23",
+      "shot_zone": null,
+      "goal_zone": null,
+      "timecode": "00:10",
+      "event_type_label": "Ballmisting/pasningsfeil"
+    },
+    {
+      "timestamp": 44,
+      "event_type": "shot_on_target",
+      "description": "Skudd fra midten av banen (langskudd), reddet av keeper",
+      "team": "angripende",
+      "confidence": 1.0,
+      "jersey_color": "svart",
+      "player_number": null,
+      "shot_zone": 7,
+      "goal_zone": 4,
+      "timecode": "00:44",
+      "event_type_label": "Skudd på mål"
+    },
+    {
+      "timestamp": 55,
+      "event_type": "turnover",
+      "description": "Pasningsfeil",
+      "team": null,
+      "confidence": 1.0,
+      "jersey_color": null,
+      "player_number": null,
+      "shot_zone": null,
+      "goal_zone": null,
+      "timecode": "00:55",
+      "event_type_label": "Ballmisting/pasningsfeil"
+    },
+    {
+      "timestamp": 67,
+      "event_type": "shot_on_target",
+      "description": "Kantskudd, reddet av keeper",
+      "team": "angripende",
+      "confidence": 1.0,
+      "jersey_color": "hvit",
+      "player_number": "2",
+      "shot_zone": 1,
+      "goal_zone": 1,
+      "timecode": "01:07",
+      "event_type_label": "Skudd på mål"
+    },
+    {
+      "timestamp": 102,
+      "event_type": "shot_on_target",
+      "description": "Gjennombrudd med venstre-høyre finte, skyter på vei utover i banen, reddet av keeper",
+      "team": "angripende",
+      "confidence": 1.0,
+      "jersey_color": "svart",
+      "player_number": null,
+      "shot_zone": 4,
+      "goal_zone": 4,
+      "timecode": "01:42",
+      "event_type_label": "Skudd på mål"
+    },
+    {
+      "timestamp": 113,
+      "event_type": "penalty",
+      "description": "Gjennombrudd, skudd på målvakt - spilleren felt under klar målsjanse, straffe tildelt til hvitt lag",
+      "team": "angripende",
+      "confidence": 1.0,
+      "jersey_color": "hvit",
+      "player_number": "11",
+      "shot_zone": 2,
+      "goal_zone": null,
+      "timecode": "01:53",
+      "event_type_label": "Straffekast"
+    },
+    {
+      "timestamp": 127,
+      "event_type": "penalty",
+      "description": "Straffekast utført - bom, ballen i stangen og ut",
+      "team": "angripende",
+      "confidence": 1.0,
+      "jersey_color": "hvit",
+      "player_number": "2",
+      "shot_zone": 10,
+      "goal_zone": null,
+      "timecode": "02:07",
+      "event_type_label": "Straffekast"
+    },
+    {
+      "timestamp": 157,
+      "event_type": "shot_wide",
+      "description": "Skudd fra venstre back (VB), går over mål. Kantovergang kjøres først, og en kantinngang kommer idet skuddet avfyres",
+      "team": "angripende",
+      "confidence": 1.0,
+      "jersey_color": null,
+      "player_number": null,
+      "shot_zone": 6,
+      "goal_zone": null,
+      "timecode": "02:37",
+      "event_type_label": "Skudd utenfor"
+    },
+    {
+      "timestamp": 180,
+      "event_type": "turnover",
+      "description": "Pasningsfeil",
+      "team": "angripende",
+      "confidence": 1.0,
+      "jersey_color": "hvit",
+      "player_number": "23",
+      "shot_zone": null,
+      "goal_zone": null,
+      "timecode": "03:00",
+      "event_type_label": "Ballmisting/pasningsfeil"
+    }
+  ]
+}
