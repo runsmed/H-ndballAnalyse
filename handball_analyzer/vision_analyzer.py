@@ -20,17 +20,28 @@ påfølgende bilder til å vurdere bevegelse og hendelser som strekker seg \
 over tid, men rapporter hver hendelse med tidsstempelet (i sekunder) til \
 bildet der den er tydeligst synlig.
 
-For hvert bilde, vurder om det viser noen av følgende hendelsestyper:
+For hvert bilde, vurder om det viser noen av følgende hendelsestyper
+(terminologi hentet fra offisiell håndball-kamprapportering):
 
 - goal: Mål
-- shot_on_target: Skudd på mål (ikke mål)
-- shot_wide: Skudd utenfor/i stolpe
-- shot_blocked: Skudd blokkert av forsvarsspiller/keeper
+- shot_on_target: Skudd på mål (ikke mål, keeper redder)
+- shot_wide: Skudd utenfor (helt forbi mål)
+- shot_post: Stolpe (skuddet treffer stolpe/tverrligger og går ut)
+- shot_blocked: Skudd blokkert av forsvarsspiller
 - free_throw: Frikast
 - exclusion: Utvisning (2 minutter)
+- warning: Advarsel (gult kort - mildere enn utvisning)
+- disqualification: Diskvalifikasjon (rødt kort)
 - penalty: Straffekast
 - turnover: Ballmisting/pasningsfeil (ball ut over sidelinjen, feilpasning,
-  teknisk feil som gir ballen til motstander - uten at det er frikast)
+  steg/tramp/brøyt eller annen teknisk feil som gir ballen til motstander -
+  uten at det er frikast). Hvis du ser presist hvilken type teknisk feil
+  det er (f.eks. steg, dobbeldribling, brøyt), nevn det i description.
+- timeout: Lagleder/dommer signaliserer timeout
+- empty_net: Et lag bytter ut keeperen med en ekstra markspiller (tomt mål
+  i eget forsvar - sees ved at keeperen forlater banen og et lag spiller
+  med 7 markspillere)
+- goalkeeper_back: Keeperen kommer tilbake på banen igjen etter empty_net
 - numerical_advantage: Tydelig overtallssituasjon for angripende lag
 - numerical_disadvantage: Tydelig undertallssituasjon for angripende lag
 - tactic_press: Presspill/høyt forsvar
@@ -44,9 +55,22 @@ Offisielle IHF-håndtegn:
 - Arm strukket ut, peker i angrepsretning = frikast (free_throw)
 - Arm/hånd peker nedover mot straffemerket (7-meter) = straffekast (penalty)
 - Arm løftet med 2 fingre vist = utvisning 2 minutter (exclusion)
+- Gult kort vist = advarsel (warning)
+- Rødt kort vist = diskvalifikasjon (disqualification)
 - Peker mot midten av banen = mål (goal)
 Et tydelig håndtegn er et sterkere bevis enn å gjette ut fra ballbevegelse
 alene - sett høyere confidence når du faktisk ser et slikt tegn.
+
+For hendelser av type goal, shot_on_target, shot_wide, shot_post eller
+shot_blocked, angi i tillegg shot_type (hvis synlig - ellers null):
+- breakthrough: Gjennombrudd (spiller bryter gjennom forsvaret nær mål)
+- long_range: Distanseskudd (skudd fra lang avstand, typisk fra bak/sentralt)
+- fast_break: Kontring (hurtig angrep etter balltap/erobring hos motstander)
+- close_range: Nærskudd (skudd fra kort hold, men ikke et rent gjennombrudd)
+
+For goal, angi i tillegg assist_player_number (draktnummeret til spilleren
+som ga målgivende pasning, KUN hvis dette er tydelig synlig - ellers null,
+ikke gjett).
 
 For hendelser av type goal, shot_on_target, shot_wide, shot_blocked eller
 penalty, angi i tillegg (hvis du kan vurdere det ut fra bildet - ellers
@@ -72,9 +96,9 @@ keeper redder skuddet - da er goal_zone stedet ballen var på vei mot FØR
 keeper reddet den, altså nøyaktig der keeper dekket. Dette er spesielt
 verdifull informasjon for keeper-analyse (hvilke soner keeperen dekker
 godt/dårlig), så ikke hopp over dette feltet bare fordi skuddet ble reddet.
-Fyll også ut for goal. IKKE fyll ut for shot_wide/shot_blocked (ballen gikk
-da ikke mot en definerbar målsone) eller penalty med mindre skuddretningen
-er tydelig synlig.
+Fyll også ut for goal. IKKE fyll ut for shot_wide/shot_post/shot_blocked
+(ballen gikk da ikke mot en definerbar målsone) eller penalty med mindre
+skuddretningen er tydelig synlig.
 
 Svar KUN med gyldig JSON: en liste av objekter med feltene
 timestamp (tall, sekunder), event_type (en av nøklene over), description
@@ -83,11 +107,13 @@ timestamp (tall, sekunder), event_type (en av nøklene over), description
 sikker du er), jersey_color (fargen på drakten til spilleren involvert i
 hendelsen, f.eks. "rød", "blå", "hvit" - kun hvis du tydelig kan se fargen,
 ellers null), player_number (draktnummeret til spilleren - for goal/
-shot_on_target/shot_wide/shot_blocked/penalty er dette SKYTTERENS nummer,
-altså spilleren som avfyrte skuddet, ikke andre spillere i bildet; for
-andre hendelser som exclusion er det spilleren hendelsen gjelder. KUN hvis
-tallet er tydelig lesbart i bildet - IKKE gjett, svar null hvis usikker),
-shot_zone (se over, ellers null), goal_zone (se over, ellers null).
+shot_on_target/shot_wide/shot_post/shot_blocked/penalty er dette SKYTTERENS
+nummer, altså spilleren som avfyrte skuddet, ikke andre spillere i bildet;
+for andre hendelser som exclusion/warning/disqualification er det
+spilleren hendelsen gjelder. KUN hvis tallet er tydelig lesbart i bildet -
+IKKE gjett, svar null hvis usikker), shot_zone (se over, ellers null),
+goal_zone (se over, ellers null), shot_type (se over, ellers null),
+assist_player_number (se over, ellers null).
 
 Hvis ingen hendelser er synlige i bildene, svar med en tom liste: []
 Ikke inkluder forklarende tekst, kun JSON."""

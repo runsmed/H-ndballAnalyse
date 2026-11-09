@@ -293,6 +293,36 @@ oppløsning (f.eks. 480p) eller fra avstand er tall ofte for små/uskarpe til
 å leses korrekt. Ikke stol blindt på draktnummer i rapporten uten å
 verifisere mot videoen.
 
+## Hendelsestyper og -felter (oppdatert mot profesjonell kamprapport-terminologi)
+
+Skjemaet er bygget for å matche terminologien brukt i offisielle norske
+håndball-kamprapporter (eliteserienivå), slik at rapportene fra dette
+verktøyet kan sammenlignes direkte mot slike referater:
+
+**Hendelsestyper (`event_type`):** `goal` (mål), `shot_on_target` (skudd på
+mål), `shot_wide` (utenfor), `shot_post` (stolpe), `shot_blocked`
+(blokkert), `free_throw` (frikast), `exclusion` (utvisning 2 min),
+`warning` (advarsel/gult kort), `disqualification` (diskvalifikasjon/rødt
+kort), `penalty` (straffekast), `turnover` (ballmisting/pasningsfeil),
+`timeout`, `empty_net` (tomt mål – keeper byttet ut for ekstra angriper),
+`goalkeeper_back`, `numerical_advantage`/`numerical_disadvantage`
+(overtall/undertall), `tactic_press`/`tactic_counter_attack`/
+`tactic_set_offense` (taktiske mønstre).
+
+**`shot_type`** – HVORDAN skuddet oppsto (for goal/shot_on_target/
+shot_wide/shot_post/shot_blocked): `breakthrough` (gjennombrudd),
+`long_range` (distanseskudd), `fast_break` (kontring), `close_range`
+(nærskudd).
+
+**`assist_player_number`** – draktnummeret til spilleren som ga
+målgivende pasning (kun for `goal`, kun hvis tydelig synlig).
+
+**Bevisst utelatt (for upålitelig til å be modellen om):** presise
+undertyper av teknisk feil (steg/dobbeldribling/brøyt - nevnes i
+`description` i stedet) og løpende spillerbytter (skjer for ofte og for
+usynlig i kringkastingsopptak til at en synsmodell kan følge det
+pålitelig).
+
 ## Hendelsesfelter: skuddsone og målsone (eksperimentelt)
 
 For skudd-relaterte hendelser (`goal`, `shot_on_target`, `shot_wide`,

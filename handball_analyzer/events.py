@@ -10,11 +10,17 @@ EVENT_TYPES = {
     "goal": "Mål",
     "shot_on_target": "Skudd på mål",
     "shot_wide": "Skudd utenfor",
+    "shot_post": "Stolpe",
     "shot_blocked": "Skudd blokkert",
     "free_throw": "Frikast",
     "exclusion": "Utvisning (2 min)",
+    "warning": "Advarsel (gult kort)",
+    "disqualification": "Diskvalifikasjon (rødt kort)",
     "penalty": "Straffekast",
     "turnover": "Ballmisting/pasningsfeil",
+    "timeout": "Timeout",
+    "empty_net": "Tomt mål (målvakt byttet ut for angriper)",
+    "goalkeeper_back": "Målvakt tilbake",
     "numerical_advantage": "Overtall",
     "numerical_disadvantage": "Undertall",
     "tactic_press": "Press",
@@ -26,6 +32,15 @@ EVENT_TYPES = {
     "heuristic_possible_shot": "Mulig skudd (heuristikk)",
     "heuristic_fast_break": "Mulig kontring (heuristikk)",
     "heuristic_high_density": "Høy spillertetthet (heuristikk)",
+}
+
+# Skuddtype - HVORDAN skuddet oppsto taktisk (separat fra EVENT_TYPES, som
+# er utfallet). Terminologi hentet fra offisiell håndball-kamprapportering.
+SHOT_TYPES = {
+    "breakthrough": "Gjennombrudd",
+    "long_range": "Distanseskudd",
+    "fast_break": "Kontring",
+    "close_range": "Nærskudd",
 }
 
 TACTIC_EVENT_TYPES = {"tactic_press", "tactic_counter_attack", "tactic_set_offense"}
@@ -49,6 +64,8 @@ class MatchEvent:
     player_number: Optional[str] = None
     shot_zone: Optional[int] = None
     goal_zone: Optional[int] = None
+    shot_type: Optional[str] = None
+    assist_player_number: Optional[str] = None
 
     @property
     def timecode(self) -> str:
@@ -58,6 +75,8 @@ class MatchEvent:
         data = asdict(self)
         data["timecode"] = self.timecode
         data["event_type_label"] = EVENT_TYPES.get(self.event_type, self.event_type)
+        if self.shot_type:
+            data["shot_type_label"] = SHOT_TYPES.get(self.shot_type, self.shot_type)
         return data
 
 
@@ -78,6 +97,8 @@ def events_from_raw_list(raw_events: list) -> List["MatchEvent"]:
                 player_number=item.get("player_number"),
                 shot_zone=_parse_optional_int(item.get("shot_zone")),
                 goal_zone=_parse_optional_int(item.get("goal_zone")),
+                shot_type=item.get("shot_type"),
+                assist_player_number=item.get("assist_player_number"),
             ))
         except (KeyError, TypeError, ValueError):
             continue

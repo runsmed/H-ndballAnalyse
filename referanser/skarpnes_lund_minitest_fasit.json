@@ -22,6 +22,8 @@
       "player_number": "23",
       "shot_zone": null,
       "goal_zone": null,
+      "shot_type": null,
+      "assist_player_number": null,
       "timecode": "00:10",
       "event_type_label": "Ballmisting/pasningsfeil"
     },
@@ -35,8 +37,11 @@
       "player_number": null,
       "shot_zone": 7,
       "goal_zone": 4,
+      "shot_type": "long_range",
+      "assist_player_number": null,
       "timecode": "00:44",
-      "event_type_label": "Skudd på mål"
+      "event_type_label": "Skudd på mål",
+      "shot_type_label": "Distanseskudd"
     },
     {
       "timestamp": 55,
@@ -48,6 +53,8 @@
       "player_number": null,
       "shot_zone": null,
       "goal_zone": null,
+      "shot_type": null,
+      "assist_player_number": null,
       "timecode": "00:55",
       "event_type_label": "Ballmisting/pasningsfeil"
     },
@@ -61,8 +68,11 @@
       "player_number": "2",
       "shot_zone": 1,
       "goal_zone": 1,
+      "shot_type": "close_range",
+      "assist_player_number": null,
       "timecode": "01:07",
-      "event_type_label": "Skudd på mål"
+      "event_type_label": "Skudd på mål",
+      "shot_type_label": "Nærskudd"
     },
     {
       "timestamp": 102,
@@ -74,8 +84,11 @@
       "player_number": null,
       "shot_zone": 4,
       "goal_zone": 4,
+      "shot_type": "breakthrough",
+      "assist_player_number": null,
       "timecode": "01:42",
-      "event_type_label": "Skudd på mål"
+      "event_type_label": "Skudd på mål",
+      "shot_type_label": "Gjennombrudd"
     },
     {
       "timestamp": 113,
@@ -87,8 +100,11 @@
       "player_number": "11",
       "shot_zone": 2,
       "goal_zone": null,
+      "shot_type": "breakthrough",
+      "assist_player_number": null,
       "timecode": "01:53",
-      "event_type_label": "Straffekast"
+      "event_type_label": "Straffekast",
+      "shot_type_label": "Gjennombrudd"
     },
     {
       "timestamp": 127,
@@ -100,6 +116,8 @@
       "player_number": "2",
       "shot_zone": 10,
       "goal_zone": null,
+      "shot_type": null,
+      "assist_player_number": null,
       "timecode": "02:07",
       "event_type_label": "Straffekast"
     },
@@ -113,6 +131,8 @@
       "player_number": null,
       "shot_zone": 6,
       "goal_zone": null,
+      "shot_type": null,
+      "assist_player_number": null,
       "timecode": "02:37",
       "event_type_label": "Skudd utenfor"
     },
@@ -126,6 +146,8 @@
       "player_number": "23",
       "shot_zone": null,
       "goal_zone": null,
+      "shot_type": null,
+      "assist_player_number": null,
       "timecode": "03:00",
       "event_type_label": "Ballmisting/pasningsfeil"
     }

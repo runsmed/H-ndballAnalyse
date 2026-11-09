@@ -135,8 +135,10 @@ def print_summary(report: dict) -> None:
         team = f" [{event['team']}]" if event.get("team") else ""
         player = _format_player(event)
         zones = _format_zones(event)
+        shot_type = f" {event['shot_type_label']}" if event.get("shot_type_label") else ""
+        assist = f" (assist: #{event['assist_player_number']})" if event.get("assist_player_number") else ""
         print(
-            f"  {event['timecode']} - {event['event_type_label']}{team}{player}{zones}: "
+            f"  {event['timecode']} -{shot_type} {event['event_type_label']}{team}{player}{zones}{assist}: "
             f"{event['description']}"
         )
 

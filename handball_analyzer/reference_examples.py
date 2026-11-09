@@ -27,7 +27,8 @@ from typing import List, Optional
 
 REFERENCE_EVENT_FIELDS = (
     "timecode", "event_type", "event_type_label", "description", "team",
-    "jersey_color", "player_number", "shot_zone", "goal_zone", "confidence",
+    "jersey_color", "player_number", "shot_zone", "goal_zone", "shot_type",
+    "shot_type_label", "assist_player_number", "confidence",
 )
 
 
