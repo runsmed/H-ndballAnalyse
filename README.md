@@ -1,6 +1,6 @@
 # Håndballanalyse
 
-Python-verktøy som analyserer video av håndballkamper med AI. Tre verktøy,
+Python-verktøy som analyserer video av håndballkamper med AI. Fire verktøy,
 velg det som passer:
 
 1. **`analyze_yolo.py`** – lokal, **gratis** forhåndsanalyse med YOLO
@@ -15,6 +15,12 @@ velg det som passer:
    Gemini**, som selv sampler frames internt. Enklere oppsett (ingen
    frame-ekstraksjon/YOLO nødvendig), og Gemini har et gratis API-nivå
    (Flash-modeller, med lave hastighetsgrenser) i tillegg til betalt bruk.
+4. **`build_training_clips.py`** – bygger et merket treningsklipp-datasett
+   fra en videofil + et offisielt kampreferat (tekstformat). Første steg mot
+   å trene en egen, lokal action-spotting-modell (f.eks. I3D) som kjører
+   **helt lokalt og gratis** ved bruk, og som faktisk blir bedre jo flere
+   kamper du mater den med – i motsetning til Claude/Gemini, som ikke lærer
+   mellom kjøringer.
 
 ```
 Alternativ A - Claude (mest presist, koster fra første token):
@@ -29,7 +35,59 @@ video.mp4  ──▶  analyze_yolo.py  ──▶  yolo_rapport.json (foreslåtte
 
 Alternativ B - Gemini (enklest, ofte gratis innenfor kvote):
 video.mp4  ──▶  analyze_gemini.py  ──▶  rapport_gemini.json
+
+Alternativ C - tren din egen lokale modell (krever GPU, ekte læring):
+video.mp4 + kampreferat.txt  ──▶  build_training_clips.py  ──▶  clips/ (merkede treningsklipp)
+                                                                     │
+                                                                     ▼
+                                                     (trening skjer utenfor dette prosjektet,
+                                                      f.eks. med OSL-ActionSpotting/I3D)
 ```
+
+## Veien mot en lokal, selvlærende modell (build_training_clips.py)
+
+Claude og Gemini lærer **ikke** mellom kjøringer (se egen seksjon om
+referanseeksempler lenger ned). Hvis du derimot vil ha en modell som
+faktisk blir bedre jo flere kamper du mater den med, **og** kjører helt
+lokalt og gratis ved bruk, er veien dit å trene en egen
+action-spotting-modell (f.eks. I3D, pretrent på Kinetics) på korte,
+merkede videoklipp fra dine egne kamper – en etablert metode med
+publisert presedens spesifikt for håndball.
+
+`build_training_clips.py` er det første steget: den tar en videofil og et
+**offisielt kampreferat** (tekstformatet fra live-rapportering, med
+blokker som `2. 28:46 / Mål! Gjennombrudd, nærskudd sentralt / A. Haugen /
+24-21`), og klipper automatisk ut et kort videosegment rundt hvert
+hendelsestidspunkt, merket med riktig `event_type` (og `shot_type` der det
+fremgår av referatets egen formulering som "Gjennombrudd"/"Distanseskudd"/
+"Kontring"/"Nærskudd").
+
+**Bruk:**
+```bash
+python build_training_clips.py --video kamp.mp4 --log kampreferat.txt \
+    --period1-start 125 --period2-start 1960 --output-dir clips/
+```
+
+**Viktig: `--period1-start`/`--period2-start` må du finne manuelt.**
+Referatets klokke teller OPP fra 00:00 (start av omgangen) til 30:00
+(slutt), men vi vet ikke hvor i *videofilen* hver omgang faktisk starter
+(det kan være forspill, pause mellom omganger av ukjent lengde osv.).
+Spol frem til start-fløyten for hver omgang i videoen og noter tidspunktet
+i sekunder.
+
+**Hva den gjør og ikke gjør:**
+- Gjenkjenner: mål, skudd (på mål/utenfor/stolpe/blokkert), frikast,
+  utvisning, advarsel, diskvalifikasjon, straffekast (tildelt og utført),
+  ballmisting/teknisk feil, timeout, tomt mål, målvakt tilbake
+- Hopper bevisst over: spillerbytter (for hyppig/usynlig til å være nyttig
+  treningsdata) og periodemarkører (brukes kun til validering)
+- Ukjente linjer i referatet rapporteres som advarsel i konsollen, ikke
+  stille forkastet – sjekk disse for å se om parseren mangler et mønster
+
+**Resultatet** (`clips/<event_type>/*.mp4` + `clips/manifest.json`) er
+rådata – selve modelltreningen (f.eks. med
+[OSL-ActionSpotting](https://github.com/OpenSportsLab/OSL-ActionSpotting))
+skjer utenfor dette prosjektet, på din GPU-maskin.
 
 ## Funksjonalitet
 
@@ -269,11 +327,14 @@ gang.
 analyze.py                        CLI: Claude-analyse (koster API-tokens)
 analyze_yolo.py                   CLI: YOLO-forhåndsanalyse (gratis, lokal)
 analyze_gemini.py                 CLI: Gemini-analyse (hel video, ofte gratis innenfor kvote)
+build_training_clips.py           CLI: bygg merkede treningsklipp fra video + kampreferat
 handball_analyzer/
   frame_extractor.py              Frame-ekstraksjon med OpenCV (hele video eller seksjoner)
   yolo_analyzer.py                YOLO-deteksjon/-sporing + heuristikker (skudd, kontring, tetthet)
   vision_analyzer.py              Claude API-integrasjon (batching, retry, parsing)
   gemini_analyzer.py              Gemini API-integrasjon (hel-video-opplasting, chunking, retry)
+  match_log_parser.py             Parser for offisielle kampreferater (tekstformat)
+  clip_dataset.py                 Klipper ut merkede treningsklipp fra video + parsede hendelser
   cost_estimator.py               Kostnadsanslag før API-kall (Claude)
   sections.py                     Parsing/sammenslåing av tidsseksjoner
   events.py                       Datamodell for hendelser + delt JSON-parsing
