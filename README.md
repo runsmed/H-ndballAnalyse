@@ -37,14 +37,15 @@ Alternativ B - Gemini (enklest, ofte gratis innenfor kvote):
 video.mp4  ──▶  analyze_gemini.py  ──▶  rapport_gemini.json
 
 Alternativ C - tren din egen lokale modell (krever GPU, ekte læring):
-video.mp4 + kampreferat.txt  ──▶  build_training_clips.py  ──▶  clips/ (merkede treningsklipp)
+video.mp4                 ──▶  find_period_anchors.py  ──▶  --period1-start/--period2-start
+video.mp4 + kampreferat.txt + ankerpunkter  ──▶  build_training_clips.py  ──▶  clips/ (merkede treningsklipp)
                                                                      │
                                                                      ▼
                                                      (trening skjer utenfor dette prosjektet,
                                                       f.eks. med OSL-ActionSpotting/I3D)
 ```
 
-## Veien mot en lokal, selvlærende modell (build_training_clips.py)
+## Veien mot en lokal, selvlærende modell
 
 Claude og Gemini lærer **ikke** mellom kjøringer (se egen seksjon om
 referanseeksempler lenger ned). Hvis du derimot vil ha en modell som
@@ -54,26 +55,49 @@ action-spotting-modell (f.eks. I3D, pretrent på Kinetics) på korte,
 merkede videoklipp fra dine egne kamper – en etablert metode med
 publisert presedens spesifikt for håndball.
 
-`build_training_clips.py` er det første steget: den tar en videofil og et
-**offisielt kampreferat** (tekstformatet fra live-rapportering, med
-blokker som `2. 28:46 / Mål! Gjennombrudd, nærskudd sentralt / A. Haugen /
-24-21`), og klipper automatisk ut et kort videosegment rundt hvert
-hendelsestidspunkt, merket med riktig `event_type` (og `shot_type` der det
-fremgår av referatets egen formulering som "Gjennombrudd"/"Distanseskudd"/
-"Kontring"/"Nærskudd").
+### Steg 1: Finn periode-ankerpunkter automatisk (find_period_anchors.py)
 
-**Bruk:**
+`build_training_clips.py` trenger å vite hvor i *videofilen* hver omgang
+starter. Siden kampklokka nesten alltid vises fast midt øverst i bildet,
+kan dette leses automatisk med OCR i stedet for at du må lete manuelt:
+
+```bash
+# 1. Sjekk at beskjæringsboksen faktisk treffer klokka:
+python find_period_anchors.py --video kamp.mp4 --preview-at 120
+# Åpne crop_preview_crop.png - juster --crop (x1,y1,x2,y2 som andel av
+# bredde/høyde, default er midt øverst) hvis boksen bommer.
+
+# 2. Kjør full deteksjon:
+python find_period_anchors.py --video kamp.mp4
+```
+
+Metoden er robust mot enkeltfeil i avlesningen: siden klokka går i
+sanntid innenfor én omgang, er `video_tidspunkt - klokke_tidspunkt`
+konstant for alle riktige avlesninger i samme omgang - feilavlesninger
+havner langt unna og filtreres bort automatisk. Du trenger bare noen få
+riktige stikkprøver spredt utover hver omgang, ikke en perfekt avlesning
+hver gang.
+
+**Krever `tesseract-ocr` installert på systemet** (ikke bare
+Python-pakken `pytesseract`, som kun er en wrapper rundt den):
+- Linux: `sudo apt install tesseract-ocr`
+- Windows: last ned installer fra [UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
+
+### Steg 2: Bygg treningsklipp (build_training_clips.py)
+
+Tar en videofil og et **offisielt kampreferat** (tekstformatet fra
+live-rapportering, med blokker som `2. 28:46 / Mål! Gjennombrudd,
+nærskudd sentralt / A. Haugen / 24-21`), og klipper automatisk ut et kort
+videosegment rundt hvert hendelsestidspunkt, merket med riktig
+`event_type` (og `shot_type` der det fremgår av referatets egen
+formulering som "Gjennombrudd"/"Distanseskudd"/"Kontring"/"Nærskudd").
+
 ```bash
 python build_training_clips.py --video kamp.mp4 --log kampreferat.txt \
     --period1-start 125 --period2-start 1960 --output-dir clips/
 ```
-
-**Viktig: `--period1-start`/`--period2-start` må du finne manuelt.**
-Referatets klokke teller OPP fra 00:00 (start av omgangen) til 30:00
-(slutt), men vi vet ikke hvor i *videofilen* hver omgang faktisk starter
-(det kan være forspill, pause mellom omganger av ukjent lengde osv.).
-Spol frem til start-fløyten for hver omgang i videoen og noter tidspunktet
-i sekunder.
+(Bruk tallene `find_period_anchors.py` ga deg i steg 1, i stedet for å
+lete manuelt.)
 
 **Hva den gjør og ikke gjør:**
 - Gjenkjenner: mål, skudd (på mål/utenfor/stolpe/blokkert), frikast,
@@ -85,9 +109,36 @@ i sekunder.
   stille forkastet – sjekk disse for å se om parseren mangler et mønster
 
 **Resultatet** (`clips/<event_type>/*.mp4` + `clips/manifest.json`) er
-rådata – selve modelltreningen (f.eks. med
-[OSL-ActionSpotting](https://github.com/OpenSportsLab/OSL-ActionSpotting))
-skjer utenfor dette prosjektet, på din GPU-maskin.
+rådata for steg 3.
+
+### Steg 3: Tren selve modellen (utenfor dette prosjektet, på din GPU)
+
+Dette skjer utenfor dette repoet, men her er en realistisk vei inn:
+
+1. **Bibliotek:** [OSL-ActionSpotting](https://github.com/OpenSportsLab/OSL-ActionSpotting)
+   (fra SoccerNet-miljøet) støtter egne datasett og flere videobackend
+   (bl.a. I3D-stil arkitekturer). Klon repoet og følg deres `usage.md` for
+   nøyaktig datasett-JSON-format – det kan avvike noe fra vår
+   `manifest.json`, så regn med å skrive en liten konverteringsskript
+   mellom de to.
+2. **Datamengde:** som tommelfingerregel, sikt mot minst 30-50 klipp per
+   hendelsestype før du forventer noe reelt signal, og gjerne 100+ for de
+   vanligste typene (mål, skudd). Sjeldne typer (diskvalifikasjon,
+   tomt mål) vil trenge flere kamper før du har nok eksempler – ikke
+   forvent god nøyaktighet på dem tidlig.
+3. **Tren/valider-splitt:** sett av minst 1-2 hele kamper du IKKE trener
+   på, til validering – ellers vet du ikke om modellen faktisk generaliserer
+   til nye kamper, eller bare har pugget de du trente på.
+4. **GPU:** fine-tuning av en I3D-liknende modell på korte klipp er
+   betydelig lettere enn å trene fra bunnen – en enkelt forbruker-GPU med
+   8-12 GB VRAM er realistisk for å starte, spesielt med en liten
+   batch-størrelse.
+5. **Pretrent vekt:** start fra Kinetics-pretrente vekter (standard i de
+   fleste action-recognition-rammeverk) – det er avgjørende for å få noe
+   fornuftig ut av et relativt lite datasett.
+
+Vi følger opp denne delen etter hvert som du faktisk kommer i gang med
+treningen og ser hva som trengs i praksis.
 
 ## Funksjonalitet
 
@@ -328,6 +379,7 @@ analyze.py                        CLI: Claude-analyse (koster API-tokens)
 analyze_yolo.py                   CLI: YOLO-forhåndsanalyse (gratis, lokal)
 analyze_gemini.py                 CLI: Gemini-analyse (hel video, ofte gratis innenfor kvote)
 build_training_clips.py           CLI: bygg merkede treningsklipp fra video + kampreferat
+find_period_anchors.py            CLI: finn periode-ankerpunkter automatisk (klokke-OCR)
 handball_analyzer/
   frame_extractor.py              Frame-ekstraksjon med OpenCV (hele video eller seksjoner)
   yolo_analyzer.py                YOLO-deteksjon/-sporing + heuristikker (skudd, kontring, tetthet)
@@ -335,6 +387,7 @@ handball_analyzer/
   gemini_analyzer.py              Gemini API-integrasjon (hel-video-opplasting, chunking, retry)
   match_log_parser.py             Parser for offisielle kampreferater (tekstformat)
   clip_dataset.py                 Klipper ut merkede treningsklipp fra video + parsede hendelser
+  clock_ocr.py                    Leser kampklokka med OCR for å finne periode-ankerpunkter
   cost_estimator.py               Kostnadsanslag før API-kall (Claude)
   sections.py                     Parsing/sammenslåing av tidsseksjoner
   events.py                       Datamodell for hendelser + delt JSON-parsing
